@@ -118,6 +118,7 @@ ds[(ds.Newspaper<20) & (ds.TV>100)].show(4)
 dp['tv_norm'] = dp.TV/sum(dp.TV)
 dp.head(4)
 
+import pyspark.sql.functions as F
 ds.withColumn('tv_norm', ds.TV/ds.groupBy().agg(F.sum("TV")).collect()[0][0]).show(4)
 
 dp['cond'] = dp.apply(lambda c: 1 if ((c.TV>100)&(c.Radio<40)) else 2 if c.Sales> 10 else 3, axis=1)
@@ -131,7 +132,7 @@ ds.withColumn('cond',
 dp['log_tv'] = np.log(dp.TV)
 dp.head(4)
 
-import pyspark.sql.functions as F
+
 ds.withColumn('log_tv', F.log(ds.TV)).show(4)
 
 
@@ -209,3 +210,104 @@ ds = ds.withColumn('Rank_spark_dense',F.dense_rank().over(w))
 ds = ds.withColumn('Rank_spark',F.rank().over(w))
 ds.show()
 
+
+
+
+
+#__________________________________________________________________________
+##### DATA EXPLORATION
+#__________________________________________________________________________
+# selected varables for the demonstration
+num_cols = ['Account Balance','No of dependents']
+
+
+
+## Numerical Variable_________________________________________________
+df.select(num_cols).describe().show()
+
+def describe_pd(df_in, columns, deciles=False):
+        '''
+        Function to union the basic stats results and deciles
+        :param df_in: the input dataframe
+        :param columns: the cloumn name list of the numerical variable
+        :param deciles: the deciles output
+        :return : the numerical describe info. of the input dataframe
+        '''
+        if deciles:
+                percentiles = np.array(range(0, 110, 10))
+        else:
+                percentiles = [25, 50, 75]
+        
+        percs = np.transpose([np.percentile(df_in.select(x).collect(), percentiles) for x in columns])
+        percs = pd.DataFrame(percs, columns=columns)
+        percs['summary'] = [str(p) + '%' for p in percentiles]
+        spark_describe = df_in.describe().toPandas()
+        new_df = pd.concat([spark_describe, percs],ignore_index=True)
+        new_df = new_df.round(2)
+        
+        return new_df[['summary'] + columns]
+
+describe_pd(df,num_cols)
+describe_pd(df,num_cols,deciles=True)
+
+## Histogram
+
+var = 'Age (years)'
+x = data1[var]
+bins = np.arange(0, 100, 5.0)
+plt.figure(figsize=(10,8))
+# the histogram of the data
+plt.hist(x, bins, alpha=0.8, histtype='bar', color='gold',
+         ec='black',weights=np.zeros_like(x) + 100. / x.size)
+plt.xlabel(var)
+plt.ylabel('percentage')
+plt.xticks(bins)
+plt.show()
+fig.savefig(var+".pdf", bbox_inches='tight')
+
+## Box and Violin plot
+
+x = df.select(var).toPandas()
+fig = plt.figure(figsize=(20, 8))
+ax = fig.add_subplot(1, 2, 1)
+ax = sns.boxplot(data=x)
+ax = fig.add_subplot(1, 2, 2)
+ax = sns.violinplot(data=x)
+
+
+## CATEGORICAL VARIABLE _______________________
+### Frequency Table
+from pyspark.sql import functions as F
+from pyspark.sql.functions import rank, sum, col
+from pyspark.sql import Window
+
+window = Window.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+# withColumn('Percent %',F.format_string("%5.0f%%\n",col('Credit_num')*100/col('total'))).\
+
+tab = df.select(['age_class','Credit Amount']).\
+        groupBy('age_class').\
+        agg(    F.count('Credit Amount').alias('Credit_num'),
+                F.mean('Credit Amount').alias('Credit_avg'),
+                F.min('Credit Amount').alias('Credit_min'),
+                F.max('Credit Amount').alias('Credit_max')).\
+        withColumn('total', sum(col('Credit_num')).over(window)).\
+        withColumn('Percent', col('Credit_num')*100/col('total')).\
+        drop(col('total'))
+
+
+# MULTIVARIATE ANALYSIS____________________
+## Correlation matrix
+
+from pyspark.mllib.stat import Statistics
+import pandas as pd
+
+corr_data = df.select(num_cols)
+col_names = corr_data.columns
+features = corr_data.rdd.map(lambda row: row[0:])
+corr_mat = Statistics.corr(features, method = "pearson")
+corr_df = pd.DataFrame(corr_mat)
+corr_df.index, corr_df.columns = col_names, col_names
+print(corr_df.to_string())
+
+## Crosstabulation
+df.stat.crosstab("age_class", "Occupation").show()

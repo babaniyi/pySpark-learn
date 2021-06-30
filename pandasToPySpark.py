@@ -311,3 +311,59 @@ print(corr_df.to_string())
 
 ## Crosstabulation
 df.stat.crosstab("age_class", "Occupation").show()
+
+
+## Create New Columns and Populate the columns
+
+from pyspark.sql.functions import lit, when, col
+
+df = df_with_winner.withColumn('testColumn', 
+                               F.lit('this is a test')) # add a column, and populate each cell in that column with occurrences of the string: this is a test.
+display(df)
+
+# Construct a new dynamic column
+df = df_with_test_column.withColumn('gameWinner', 
+                         when((col("homeFinalRuns") > col("awayFinalRuns")), col("homeFinalRuns"))
+                                .otherwise(lit('awayTeamName')))
+
+display(df)
+
+
+## Filter with like, contains(), startswith(), and endsWith()
+df = df.filter(df.winner.like('Nat%'))
+
+## isin() Match multiple values
+df = df.filter(df.gameWinner.isin('Cubs', 'Indians'))
+
+
+## concat() For Appending Strings
+
+df = df.withColumn("gameTitle",
+        concat(df.homeTeamName, lit(" vs. "), df.awayTeamName))
+
+
+
+# DROPPING ROWS______________________
+## Drop NA
+df = df.dropna(subset=['postal_code', 'city', 'country', 'address_1'])
+display(df)
+
+## Drop duplicates
+df = df.dropduplicates(subset="recall_number")
+display(df)
+
+
+# Filtering by String Values ______________
+
+df.filter(df.city.contains('San Francisco'): #Returns rows where strings of a column contain a provided substring. In our example, filtering by rows which contain the substring "San Francisco" would be a good way to get all rows in San Francisco, instead of just "South San Francisco".
+df.filter(df.city.startswith('San')): #Returns rows where a string starts with a provided substring.
+df.filter(df.city.endswith('ice')): #Returns rows where a string starts with a provided substring.
+df.filter(df.city.isNull()): #Returns rows where values in a provided column are null.
+df.filter(df.city.isNotNull()): #Opposite of the above.
+df.filter(df.city.like('San%')): #Performs a SQL-like query containing the LIKE clause.
+df.filter(df.city.rlike('[A-Z]*ice$')): #Performs a regexp filter.
+df.filter(df.city.isin('San Francisco', 'Los Angeles')):# Looks for rows where the string value of a column matches any of the provided strings exactly.
+
+
+## Filter by date________
+df = df.filter(df.report_date.between('2013-01-01 00:00:00','2015-01-11 00:00:00')

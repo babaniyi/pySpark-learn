@@ -1,4 +1,8 @@
-# 1._________________ CREATE RDD ________________________
+# 1._________________ CREATE RDD ________________________________
+#. ------------------ Tutorial websites -------------------------
+https://hackersandslackers.com/structured-streaming-in-pyspark
+https://runawayhorse001.github.io/LearningApacheSpark/pyspark.pdf       
+# ----------------------------------------------------------------
 
 from pyspark.sql import SparkSession
 spark = SparkSession \
@@ -367,3 +371,12 @@ df.filter(df.city.isin('San Francisco', 'Los Angeles')):# Looks for rows where t
 
 ## Filter by date________
 df = df.filter(df.report_date.between('2013-01-01 00:00:00','2015-01-11 00:00:00')
+
+## Sort dataframe
+df = df.orderBy('report_date', ascending=False)
+               
+## Rename columns
+df = df.withColumnRenamed('recall_number', 'id')
+
+### We can also change multiple columns at once:
+df = df.selectExpr("product_type as type", "product_description as product_description")

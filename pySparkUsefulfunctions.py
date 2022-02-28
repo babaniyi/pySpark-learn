@@ -24,3 +24,14 @@ outliers = df_outliers.select(*['id'] + [ (
 df_outliers = df_outliers.join(outliers, on='id') 
 df_outliers.filter('weight_o').select('id', 'weight').show() 
 df_outliers.filter('age_o').select('id', 'age').show()
+
+#______________ Append/Union a list of dataframes _____________
+dfs = [df1, df2, df3, df4]
+
+def union_all(dfs):
+    if len(dfs) > 1:
+        return dfs[0].unionAll(union_all(dfs[1:]))
+    else:
+        return dfs[0]
+      
+concat_df = union_all(dfs)

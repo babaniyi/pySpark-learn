@@ -35,3 +35,48 @@ def union_all(dfs):
         return dfs[0]
       
 concat_df = union_all(dfs)
+
+
+#__________________ Custom UDF ___________________________
+# Suppose df contains a column - star_tating with integer values between 1 - 6
++-----------+-----------+
+|marketplace|star_rating|
++-----------+-----------+
+|         jp|          1|
+|         de|          4|
+|         fr|          5|
+|         de|          5|
+|         fr|          4|
++-----------+-----------+
+
+# python udf
+def star_rating_description(v_star_rating):
+	if v_star_rating == 1:
+		return "Poor"
+	elif v_star_rating == 2:
+		return "Fair"
+	elif v_star_rating == 3:
+		return "Average"
+	elif v_star_rating == 4:
+		return "Good"
+	else:
+		return "Excellent"
+  
+from pyspark.sql.functions import udf,col
+from pyspark.sql.types import StringType
+
+# Convert python UDF "star_rating_description" to PySpark UDF "udf_star_desc". 
+#Now we can use it in PySpark code. "StringType" is the return type of PySpark function.
+udf_star_desc = udf(lambda x:star_rating_description(x),StringType() )
+
+>>> df_shoes.withColumn("rating_description",udf_star_desc(col("star_rating"))).select("marketplace","star_rating","rating_description").distinct().show(5)
++-----------+-----------+------------------+
+|marketplace|star_rating|rating_description|
++-----------+-----------+------------------+
+|         FR|          1|              Poor|
+|         DE|          3|           Average|
+|         US|          1|              Poor|
+|         US|          4|              Good|
+|         UK|          3|           Average|
++-----------+-----------+------------------+
+only showing top 5 rows

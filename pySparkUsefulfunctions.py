@@ -79,4 +79,21 @@ udf_star_desc = udf(lambda x:star_rating_description(x),StringType() )
 |         US|          4|              Good|
 |         UK|          3|           Average|
 +-----------+-----------+------------------+
-only showing top 5 rows
+
+
+#_____________ CUstom udf _________________
+"""Spark doesn't understand numpy float type"""
+import numpy as np
+from pyspark.sql.functions import udf
+from pyspark.sql.types import FloatType
+
+array_mean = udf(lambda x: float(np.mean(x)), FloatType())
+df.select("longitude", array_mean("longitude").alias("avg")).show()
++--------------------+------------------+
+|           longitude|     avg_longitude|
++--------------------+------------------+
+|      [-80.9, -82.9]|             -81.9|
+|[-82.92, -82.93, ...|-82.93166666666667|
+|    [-82.93, -82.93]|            -82.93|
++--------------------+------------------+
+

@@ -368,7 +368,31 @@ df.filter(df.city.like('San%')): #Performs a SQL-like query containing the LIKE 
 df.filter(df.city.rlike('[A-Z]*ice$')): #Performs a regexp filter.
 df.filter(df.city.isin('San Francisco', 'Los Angeles')):# Looks for rows where the string value of a column matches any of the provided strings exactly.
 
+# Replace string _________________________
+import pyspark.sql.functions as f
+df = sqlCtx.createDataFrame([("$100,00",),("#foobar",),("foo, bar, #, and $",)], ["A"])
+df.show()
+#+------------------+
+#|                 A|
+#+------------------+
+#|           $100,00|
+#|           #foobar|
+#|foo, bar, #, and $|
+#+------------------+
+          
+df.select("A", f.translate(f.col("A"), "$#,", "XYZ").alias("replaced")).show()
+#+------------------+------------------+
+#|                 A|          replaced|
+#+------------------+------------------+
+#|           $100,00|           X100Z00|
+#|           #foobar|           Yfoobar|
+#|foo, bar, #, and $|fooZ barZ YZ and X|
+#+------------------+------------------+
 
+# Using RegExp
+df.select("A", f.regexp_replace(f.col("A"), "[\$#,]", "").alias("replaced")).show()
+          
+          
 ## Filter by date________
 df = df.filter(df.report_date.between('2013-01-01 00:00:00','2015-01-11 00:00:00')
 

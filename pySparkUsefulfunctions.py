@@ -98,10 +98,42 @@ df.select("longitude", array_mean("longitude").alias("avg")).show()
 +--------------------+------------------+
 
 
-  #__________MELT Pypsark dataframe ________________
+#__________MELT Pypsark dataframe ________________
 def melt(df,cols,alias=('key','value')):
   other = [col for col in df.columns if col not in cols]
   for c in cols:
     df = df.withColumn(c, F.expr(f'map("{c}", cast({c} as double))'))
   df = df.withColumn('melted_cols', F.map_concat(*cols))
   return df.select(*other,F.explode('melted_cols').alias(*alias))
+
+  
+#_____________ Convert json to columns _________________
+/+---+--------------------------------------------------------------------------+
+//|id |value                                                                     |
+//+---+--------------------------------------------------------------------------+
+//|1  |{"Zipcode":704,"ZipCodeType":"STANDARD","City":"PARC PARQUE","State":"PR"}|
+//+---+--------------------------------------------------------------------------+
+
+ # Method 1: json_tuple
+
+from pyspark.sql.functions import json_tuple
+df.select(col("id"),json_tuple(col("value"),"Zipcode","ZipCodeType","City")) \
+    .toDF("id","Zipcode","ZipCodeType","City") \
+    .show(truncate=False)
+
+//+---+-------+-----------+-----------+
+//|id |Zipcode|ZipCodeType|City       |
+//+---+-------+-----------+-----------+
+//|1  |704    |STANDARD   |PARC PARQUE|
+//+---+-------+-----------+-----------+
+
+  # Method 2: get_json_object
+from pyspark.sql.functions import get_json_object
+df.select(col("id"),get_json_object(col("value"),"$.ZipCodeType").alias("ZipCodeType")) \
+    .show(truncate=False)
+
+//+---+-----------+
+//|id |ZipCodeType|
+//+---+-----------+
+//|1  |STANDARD   |
+//+---+-----------+

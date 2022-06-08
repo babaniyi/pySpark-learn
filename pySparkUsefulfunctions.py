@@ -137,3 +137,16 @@ df.select(col("id"),get_json_object(col("value"),"$.ZipCodeType").alias("ZipCode
 //+---+-----------+
 //|1  |STANDARD   |
 //+---+-----------+
+  
+  
+#____________________ FORWARD AND BACKWARD FILL ______________________
+window = Window.partitionBy('name')\
+               .orderBy('timestamplast')\
+               .rowsBetween(-sys.maxsize, 0) # this is for forward fill  
+               # .rowsBetween(0,sys.maxsize) # this is for backward fill  
+
+# define the forward-filled column
+filled_column = last(df['longitude'], ignorenulls=True).over(window)  # this is for forward fill  
+# filled_column = first(df['longitude'], ignorenulls=True).over(window)  # this is for backward fill
+
+df = df.withColumn('mmsi_filled', filled_column) # do the fill

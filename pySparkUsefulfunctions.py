@@ -37,6 +37,30 @@ def union_all(dfs):
 concat_df = union_all(dfs)
 
 
+
+#_____________ Append (or union) a list of pyspark dataframes __________
+from functools import reduce
+from pyspark.sql import DataFrame
+
+def union_list(dfs: Iterable[ps.DataFrame]) -> ps.DataFrame:
+  """
+  Function to append (union) dataframes stored in a list
+  Args
+  -----
+  dfs (Iterable[ps.DataFrame]): A list containing pyspark dataframes
+  
+  Return
+  ------
+  df (ps.DataFrame): A single dataframe that contains the appended dataframes
+  """
+  
+  df = reduce(DataFrame.unionAll, dfs)
+  
+  return df
+
+concat_df = union_list(dfs) # Call the function
+
+
 #__________________ Custom UDF ___________________________
 # Suppose df contains a column - star_tating with integer values between 1 - 6
 +-----------+-----------+
@@ -81,7 +105,7 @@ udf_star_desc = udf(lambda x:star_rating_description(x),StringType() )
 +-----------+-----------+------------------+
 
 
-#_____________ CUstom udf _________________
+#_____________ Custom udf _________________
 """Spark doesn't understand numpy float type"""
 import numpy as np
 from pyspark.sql.functions import udf

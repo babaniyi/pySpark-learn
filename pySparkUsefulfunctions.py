@@ -174,3 +174,14 @@ filled_column = last(df['longitude'], ignorenulls=True).over(window)  # this is 
 # filled_column = first(df['longitude'], ignorenulls=True).over(window)  # this is for backward fill
 
 df = df.withColumn('mmsi_filled', filled_column) # do the fill
+
+  
+#____________ CHECK IF DATAFRAMES ARE EQUAL __________
+from pyspark.sql import DataFrame
+
+def df_are_equal(d1: DataFrame, d2: DataFrame) -> bool:
+    """Returns true iff the two input dataframes have the same rows, regardless of their order.
+    This method takes into account duplicate rows, e.g. if x is a row, then [x, x] is not considered equal
+    to [x].
+    Note that an advantage of this method is that it avoids potentially expensive calls to `collect()`"""
+    return d1.exceptAll(d2).count() == 0 and d2.exceptAll(d1).count() == 0

@@ -185,3 +185,8 @@ def df_are_equal(d1: DataFrame, d2: DataFrame) -> bool:
     to [x].
     Note that an advantage of this method is that it avoids potentially expensive calls to `collect()`"""
     return d1.exceptAll(d2).count() == 0 and d2.exceptAll(d1).count() == 0
+
+  
+
+#__________________ SELECT NUMERICAL COLUMNS ________
+numeric_cols = [field.name for field in df.schema.fields if isinstance(field.dataType, LongType) | isinstance(field.dataType, IntegerType) | isinstance(field.dataType, FloatType)]

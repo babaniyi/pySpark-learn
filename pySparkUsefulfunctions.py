@@ -190,3 +190,12 @@ def df_are_equal(d1: DataFrame, d2: DataFrame) -> bool:
 
 #__________________ SELECT NUMERICAL COLUMNS ________
 numeric_cols = [field.name for field in df.schema.fields if isinstance(field.dataType, LongType) | isinstance(field.dataType, IntegerType) | isinstance(field.dataType, FloatType)]
+  
+#_______________ COUNT UNIQUE ITEMS IN A DATAFRAME __________
+ def count_unique(df: ps.DataFrame) -> ps.DataFrame:
+  """
+  Function to count the number of unique items in each column of a dataframe
+  """
+  
+  result = df.agg(*(f.countDistinct(f.col(c)).alias(c) for c in df.columns))
+  return result

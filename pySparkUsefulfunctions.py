@@ -199,3 +199,7 @@ numeric_cols = [field.name for field in df.schema.fields if isinstance(field.dat
   
   result = df.agg(*(f.countDistinct(f.col(c)).alias(c) for c in df.columns))
   return result
+
+#____________ Clear matplotlib plots ______
+from IPython.display import set_matplotlib_formats
+set_matplotlib_formats('retina')

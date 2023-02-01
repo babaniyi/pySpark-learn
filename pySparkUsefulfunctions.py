@@ -219,3 +219,32 @@ def pad_dates(self):
     self.df = (self.df.join(padded_df, on=[self.var_id, 'date'], how='right')
                        .fillna(0)
               )
+  
+  
+  
+# ________________ TIME AFTER EVENT _______________ 
+w = Window.orderBy("date").rowsBetween(Window.unboundedPreceding, -1)
+
+result = df.withColumn(
+    "last_event_date",
+    F.last(F.when(F.col("event") == 1, F.col("date")), ignorenulls=True).over(w)
+).withColumn(
+    "tae",
+    F.concat(
+        F.coalesce(F.datediff("date", "last_event_date"), F.lit("NA")),
+        F.lit(" days")
+    )
+).drop("last_event_date")
+
+result.show()
+#+----------+-----+--------+
+#|      date|event|     tae|
+#+----------+-----+--------+
+#|2000-07-06|    0| NA days|
+#|2000-09-15|    0| NA days|
+#|2000-10-15|    1| NA days|
+#|2001-01-03|    0| 80 days|
+#|2001-03-17|    1|153 days|
+#|2001-05-23|    1| 67 days|
+#|2001-08-26|    0| 95 days|
+#+----------+-----+--------+

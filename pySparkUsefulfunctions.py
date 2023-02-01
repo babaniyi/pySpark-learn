@@ -200,6 +200,22 @@ numeric_cols = [field.name for field in df.schema.fields if isinstance(field.dat
   result = df.agg(*(f.countDistinct(f.col(c)).alias(c) for c in df.columns))
   return result
 
-#____________ Clear matplotlib plots ______
+#____________ Clear matplotlib plots _______________
 from IPython.display import set_matplotlib_formats
 set_matplotlib_formats('retina')
+  
+
+#_____________ PAD DATAFRAMES ____________________
+def pad_dates(self):
+    start_date = self.df.agg(f.min('date').alias('min_date')).collect()[0]['min_date']
+    end_date = self.df.agg(f.max('date').alias('max_date')).collect()[0]['max_date']
+    padded_df = spark.createDataFrame([(1,)], ["dummy"])
+    padded_df = padded_df.withColumn('date', f.explode(f.expr(f"sequence(to_date('{start_date}'), to_date('{end_date}'), interval 1 day)")))
+    padded_df = padded_df.crossJoin(self.df.select(self.var_id, 'first_login').distinct())
+    padded_df = (padded_df.filter(f.col('date')>=f.col('first_login'))
+                           .drop('dummy', 'first_login')
+                )
+
+    self.df = (self.df.join(padded_df, on=[self.var_id, 'date'], how='right')
+                       .fillna(0)
+              )

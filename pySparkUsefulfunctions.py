@@ -248,3 +248,50 @@ result.show()
 #|2001-05-23|    1| 67 days|
 #|2001-08-26|    0| 95 days|
 #+----------+-----+--------+
+  
+  
+
+#____________ DOWNLOAD DBFS FILE FROM DATABRICKS LOCALLY ___________________
+  
+def save_dbfs_local(file_path: list, whole_folder: bool=False) -> str:
+  """
+  Save data stored in DBFS to local computer
+  
+  Args
+  ----
+    file_path : List of strings
+        It is a list containing the dbfs path where the csv file is located.
+        This should be in spark API format "dbfs:/FileStore/...."
+    whole_folder : bool
+        If the file_path is a folder name that contains many files, set to True.
+        For example, "dbfs:/FileStore/data/historical/" is a folder
+        and if you want to download all the csv files inside, set it to True
+        
+  Return
+  ------
+    str : An hyperlink that when clicked allows you to download the csv file locally
+  """
+  
+  for item in file_path:
+    if "FileStore" in item is False:
+      raise TypeError("Ensure the file path is located in 'dbfs:/FileStore/'")
+    
+  if not isinstance(file_path, list):
+    raise TypeError("file_path should be a list of strings")
+  
+ 
+  # > If  the file_path is a list of folder paths, read every item in each folder path and download
+  if whole_folder is True:
+    read_from = "".join(file_path)
+    
+    for item in dbutils.fs.ls(read_from):
+      read_path = str(item.name)
+      final_path = read_from[16:] + read_path
+      displayHTML(f"""<a href="/files/{final_path}"> Download {read_path} </a>""")
+  
+  # > If the file_path is a list of paths containing paths to different files
+  else:
+    for item in file_path:
+      read_from = "".join(item)
+      read_path = read_from[16:]
+      displayHTML(f"""<a href="/files/{read_path}"> Download {read_path} </a>""")

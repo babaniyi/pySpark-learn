@@ -37,26 +37,17 @@
 - SUM(trade_vol) OVER (PARTITION BY ticker) as total_vol
 
 > PANDAS
-- df['volume_3day'] = df.sort_values(by=['date'], ascending=True)\
-                       .groupby(['ticker'])['trade_vol']\
-                       .rolling(3, min_periods = 1).sum()\
-                       .reset_index(drop=True, level=0)
+- df['volume_3day'] = df.sort_values(by=['date'], ascending=True).groupby(['ticker'])['trade_vol'].rolling(3, min_periods = 1).sum().reset_index(drop=True, level=0)
 
-- df['cum_total_vol'] = df.sort_values(by=['date'], ascending=True)\
-                       .groupby(['ticker'])['trade_vol']\
-                       .cumsum()
+- df['cum_total_vol'] = df.sort_values(by=['date'], ascending=True).groupby(['ticker'])['trade_vol'].cumsum()
 
-- df['total_vol'] = df.groupby(['ticker', 'year'])['trade_vol']\
-                        .transform('sum')
+- df['total_vol'] = df.groupby(['ticker', 'year'])['trade_vol'].transform('sum')
 
   # Average within each group
 - AVG(trade_vol) OVER (PARTITION BY ticker) as avg_trade_vol,
 - AVG(price) OVER (PARTITION BY ticker ORDER BY date ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) as ma2
 
-- df['avg_trade_vol'] = df.groupby(['ticker', 'year'])['trade_vol']\
-                        .transform('mean')
+> PANDAS
+- df['avg_trade_vol'] = df.groupby(['ticker', 'year'])['trade_vol'].transform('mean')
 
-- df['ma20'] = df.sort_values(by=['date'], ascending=True)\
-                    .groupby('ticker')['price']\
-                    .rolling(20, min_periods = 1).mean()\
-                    .reset_index(drop=True, level=0)
+- df['ma20'] = df.sort_values(by=['date'], ascending=True).groupby('ticker')['price'].rolling(20, min_periods = 1).mean().reset_index(drop=True, level=0)
